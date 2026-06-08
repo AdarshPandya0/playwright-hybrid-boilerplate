@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "clean": "node utils/cleanup.js",
-    "test-local": "cross-env ENV=local npx playwright test",
+    "test:local": "cross-env ENV=local npx playwright test",
     "report:merge": "node ./utils/hoist-blobs.js && npx playwright merge-reports --reporter html ./blob-report",
     "test:ui:local": "cross-env ENV=local npx playwright test --ui",
     "test:ui:prod": "cross-env ENV=prod npx playwright test --ui",

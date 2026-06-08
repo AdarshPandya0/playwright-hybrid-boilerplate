@@ -117,7 +117,8 @@ export const test = base.extend({
         await context.close();
     },
 
-  // Generic API fixture to reuse cookies or tokens from the browser context.
+  // Generic API fixture to reuse browser authentication state for API calls.
+  // This fixture can be extended to inject cookies, tokens, or headers into API requests.
   apiContext: async ({ page, request }, use) => {
     const cookies = await page.context().cookies();
     const token = cookies.find(c => c.name === 'x-token')?.value || '';

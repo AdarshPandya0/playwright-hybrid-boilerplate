@@ -112,6 +112,15 @@ The framework is now fully initialized.
 
 Several execution modes are available through the configured npm scripts.
 
+### Available npm scripts
+
+* `npm run clean` — remove stale artifacts from `.auth`, `blob-report`, and `playwright-report`
+* `npm run test:local` — run the suite against the local environment
+* `npm run test:ui:local` — launch the Playwright UI for local testing
+* `npm run test:ui:prod` — launch the Playwright UI for production testing
+* `npm run test:local:sharded` — run four parallel shards with blob report output
+* `npm run report:merge` — merge blob artifacts into a single HTML report
+
 ---
 
 ## Option A: Visual Runner (Recommended for Test Development)
@@ -119,7 +128,7 @@ Several execution modes are available through the configured npm scripts.
 Launch Playwright's UI mode:
 
 ```bash
-npx playwright test --ui
+npm run test:ui:local
 ```
 
 Benefits:
@@ -139,13 +148,13 @@ Run the complete suite in the background:
 npm run test:local
 ```
 
-Before execution, the framework automatically runs:
+If you need a clean start, run the cleanup step first:
 
-```text
-utils/cleanup.js
+```bash
+npm run clean
 ```
 
-This removes:
+The cleanup script removes:
 
 * Stale reports
 * Expired authentication files
@@ -170,7 +179,7 @@ This uses Playwright's report merge feature to generate a consolidated HTML repo
 Execute the test suite in parallel across four shards:
 
 ```bash
-npm run test:sharded
+npm run test:local:sharded
 ```
 
 This configuration:
