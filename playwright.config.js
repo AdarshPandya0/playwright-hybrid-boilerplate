@@ -1,7 +1,8 @@
 ﻿import { defineConfig, devices } from '@playwright/test';
 import dotenv from 'dotenv';
 
-// Load environment variables from .env so the config can read BASE_URL and CI settings.
+// Load environment variables from .env so the config can read CI settings and application URLs.
+// Note: this setup allows your tests to rely on `process.env.BASE_URL` rather than hard-coding a base URL.
 dotenv.config({ path: '.env' });
 
 export default defineConfig({
@@ -24,8 +25,8 @@ export default defineConfig({
   reporter: [['html'], ['blob']],
 
   use: {
-    // Base URL for app navigation. Override using .env if needed.
-    baseURL: process.env.BASE_URL || 'https://your-app-url.com',
+    // Note: `baseURL` is intentionally not hard-coded here.
+    // If tests use relative URLs, set BASE_URL in your `.env` file.
 
     // Capture trace only on the first retry for failed tests.
     trace: 'on-first-retry',

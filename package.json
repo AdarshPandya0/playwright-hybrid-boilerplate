@@ -4,15 +4,18 @@
   "scripts": {
     "clean": "node utils/cleanup.js",
     "test:local": "npm run clean && npx playwright test",
-    "test:sharded": "npm run clean && npm-run-all --parallel test:shard:1 test:shard:2 test:shard:3 test:shard:4",
+    "test:sharded": "npm run clean && cross-env CI=true npm-run-all --parallel test:shard:1 test:shard:2 test:shard:3 test:shard:4",
     "test:shard:1": "npx playwright test --shard=1/4",
     "test:shard:2": "npx playwright test --shard=2/4",
     "test:shard:3": "npx playwright test --shard=3/4",
     "test:shard:4": "npx playwright test --shard=4/4",
+    "report:merge": "npx playwright merge-reports --reporter html ./blob-report",
     "update-snapshots": "npx playwright test --update-snapshots"
   },
   "devDependencies": {
     "@playwright/test": "latest",
+    "cross-env": "^7.0.3",
+    "dotenv": "^16.4.5",
     "npm-run-all": "^4.1.5"
   }
 }

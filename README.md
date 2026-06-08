@@ -31,7 +31,7 @@ Follow these steps to safely initialize the framework without overwriting any cu
 Clone the repository and navigate into the project directory.
 
 ```bash
-git clone <your-repository-url>
+git clone https://github.com/AdarshPandya0/playwright-hybrid-boilerplate.git
 cd playwright-hybrid-boilerplate
 ```
 
@@ -49,7 +49,9 @@ Simply install the dependencies defined in `package.json`:
 npm install
 ```
 
-This downloads all required libraries (such as `@playwright/test`, `npm-run-all`, and others) into the `node_modules` directory without overwriting the custom `playwright.config.js`.
+This downloads all required libraries (such as `@playwright/test`, `npm-run-all`, `cross-env`, and `dotenv`) into the `node_modules` directory without overwriting the custom `playwright.config.js`.
+
+> `cross-env` enables `CI=true` in `npm run test:sharded` on Windows, and `dotenv` allows Playwright config to load `.env` values.
 
 ---
 
@@ -73,23 +75,28 @@ The framework uses a `.env` file to store credentials and environment-specific c
 
 ### Create Your `.env` File
 
+This repository provides example environment templates inside the `.env.example/` directory.
+
 **Mac/Linux**
 
 ```bash
-cp .env.example .env
+cp -R .\.env.example .\.env
 ```
 
 **Windows (PowerShell)**
 
 ```powershell
-Copy-Item .env.example -Destination .env
+Copy-Item -Path ".\.env.example" -Destination ".\.env" -Recurse
 ```
 
 Open the newly created `.env` file and provide:
 
+* `BASE_URL` for your application under test (required if tests use relative URLs)
 * QA environment URLs
 * User credentials
 * Any additional environment variables required by your application
+
+> Note: `playwright.config.js` loads `.env` via `dotenv`, so your test configuration can depend on these values.
 
 ### Parallel Execution Requirement
 
@@ -146,7 +153,19 @@ This removes:
 
 ---
 
-## Option C: Sharded Runner (Maximum Speed)
+## Option C: Merge Reports
+
+If you need a single merged HTML report from Playwright blob output, run:
+
+```bash
+npm run report:merge
+```
+
+This uses Playwright's report merge feature to generate a consolidated HTML report from the `blob-report` artifacts.
+
+---
+
+## Option D: Sharded Runner (Maximum Speed)
 
 Execute the test suite in parallel across four shards:
 
