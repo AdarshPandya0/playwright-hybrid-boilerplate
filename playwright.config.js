@@ -3,7 +3,9 @@ import dotenv from 'dotenv';
 
 // Load environment variables from .env so the config can read CI settings and application URLs.
 // Note: this setup allows your tests to rely on `process.env.BASE_URL` rather than hard-coding a base URL.
-dotenv.config({ path: '.env' });
+dotenv.config({
+  path: `./.env/.env.${process.env.ENV}`,
+});
 
 export default defineConfig({
   // Where Playwright looks for test files.
@@ -25,8 +27,7 @@ export default defineConfig({
   reporter: [['html'], ['blob']],
 
   use: {
-    // Note: `baseURL` is intentionally not hard-coded here.
-    // If tests use relative URLs, set BASE_URL in your `.env` file.
+    baseURL: process.env.URL,
 
     // Capture trace only on the first retry for failed tests.
     trace: 'on-first-retry',
