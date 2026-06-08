@@ -8,9 +8,10 @@ export const test = base.extend({
     // Choose account index using shard information or worker index.
     let accountIndex = testInfo.config.shard ? testInfo.config.shard.current : (testInfo.parallelIndex % 4) + 1;
 
-    // Credentials are loaded from environment variables such as APP_USERNAME_1.
-    const dynamicUsername = process.env[`APP_USERNAME_${accountIndex}`];
-    const dynamicPassword = process.env[`APP_PASSWORD_${accountIndex}`];
+    // Credentials are loaded from environment variables such as EHR_USERNAME_1.
+    const dynamicUsername = process.env[`EHR_USERNAME_${accountIndex}`];
+    const dynamicPassword = process.env[`EHR_PASSWORD_${accountIndex}`];
+    const clinic = process.env.EHR_CLINIC;
 
     const statePath = path.resolve(`.auth/state-${accountIndex}.json`);
     const sessionPath = path.resolve(`.auth/session-${accountIndex}.json`);
@@ -35,61 +36,86 @@ export const test = base.extend({
     }
 
     // Attempt the fast path using cached storage state and session data.
-    if (fs.existsSync(statePath) && fs.existsSync(sessionPath)) {
-      context = await browser.newContext({ storageState: statePath });
+     if (fs.existsSync(statePath) && fs.existsSync(sessionPath)) {
+          console.log('Attempting Fast Path Login...');
+          context = await browser.newContext({ storageState: statePath });
 
-      // Intercept logout endpoints to avoid session invalidation during setup.
-      await context.route('**/*logout*', route => route.fulfill({ status: 200, body: '{"success":true}' }));
+          await context.route('**/*logout*', route => {
+              route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true }) });
+          });
 
-      const page = await context.newPage();
-      await page.goto('/');
+          const page = await context.newPage();
+          await page.goto('/#/app/dashboard'); 
 
-      const sessionData = fs.readFileSync(sessionPath, 'utf-8');
-      await page.evaluate((data) => {
-        const parsed = JSON.parse(data);
-        Object.keys(parsed).forEach(key => window.sessionStorage.setItem(key, parsed[key]));
-      }, sessionData);
+          const sessionData = fs.readFileSync(sessionPath, 'utf-8');
+          await page.evaluate((data) => {
+              const parsedSession = JSON.parse(data);
+              for (const key of Object.keys(parsedSession)) {
+                  window.sessionStorage.setItem(key, parsedSession[key]);
+              }
+          }, sessionData);
 
-      await page.goto('/dashboard');
+          await page.goto('/#/app/dashboard'); 
 
-      try {
-        await expect(page.locator('text="Dashboard"')).toBeVisible({ timeout: 5000 });
-        await use(page);
-        await context.close();
-        return;
-      } catch (error) {
-        console.log('Fast path token likely expired or session invalid. Falling back to slow login path...');
-        fs.unlinkSync(statePath);
-        fs.unlinkSync(sessionPath);
-        await context.close();
-      }
-    }
+          try {
+              // Wait for the Dashboard. If it redirects to login, this will fail!
+              await expect(page.getByRole('link', { name: "Dashboard" })).toBeVisible({ timeout: 5000 });
+              
+              // IF WE GET HERE, FAST PATH WAS A SUCCESS!
+              await use(page);
+              await context.close();
+              return; // Exit the fixture completely!
+              
+          } catch (error) {
+              // IF WE GET HERE, THE TOKEN WAS DEAD (401 Redirect)
+              console.log('Fast path failed (Token likely expired server-side / Logout Attempt). Falling back to Slow Path...');
+              
+              // Delete the poisoned files so they aren't used again
+              fs.unlinkSync(statePath);
+              fs.unlinkSync(sessionPath);
+              
+              // Close the broken context
+              await context.close();
+              
+              // DO NOT THROW AN ERROR. Let the code continue down to the Slow Path!
+          }
+      } 
 
     // Slow path: perform a UI login and then persist auth state for future runs.
-    context = await browser.newContext();
-    await context.route('**/*logout*', route => route.fulfill({ status: 200, body: '{"success":true}' }));
+    console.log('Executing Slow Path Login...');
+        context = await browser.newContext();
 
-    const setupPage = await context.newPage();
-    await setupPage.goto('/login');
-    await setupPage.locator('input[name="username"]').fill(dynamicUsername);
-    await setupPage.locator('input[name="password"]').fill(dynamicPassword);
-    await setupPage.locator('button[type="submit"]').click();
+        await context.route('**/*logout*', route => {
+            route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true }) });
+        });
 
-    await expect(setupPage.locator('text="Dashboard"')).toBeVisible();
+        const setupPage = await context.newPage();
 
-    await context.storageState({ path: statePath });
-    const sessionStorageData = await setupPage.evaluate(() => {
-      const data = {};
-      for (let i = 0; i < window.sessionStorage.length; i++) {
-        data[window.sessionStorage.key(i)] = window.sessionStorage.getItem(window.sessionStorage.key(i));
-      }
-      return JSON.stringify(data);
-    });
-    fs.writeFileSync(sessionPath, sessionStorageData);
+        await setupPage.goto('/#/login');
+        await setupPage.locator('#clinic input').fill(clinic);
+        await setupPage.locator('#username input').fill(dynamicUsername);
+        await setupPage.locator('#password input').fill(dynamicPassword);
+        await setupPage.getByRole('button', { name: 'Login' }).click();
 
-    await use(setupPage);
-    await context.close();
-  },
+        await expect(setupPage.getByRole('link', { name: "Dashboard" })).toBeVisible();
+
+        // Snapshot Cookies and Local Storage
+        await context.storageState({ path: statePath });
+
+        // Extract Session Storage
+        const sessionStorageData = await setupPage.evaluate(() => {
+            const data = {};
+            for (let i = 0; i < window.sessionStorage.length; i++) {
+                const key = window.sessionStorage.key(i);
+                data[key] = window.sessionStorage.getItem(key);
+            }
+            return JSON.stringify(data);
+        });
+        fs.writeFileSync(sessionPath, sessionStorageData);
+        
+        await use(setupPage);
+        await context.close();
+    },
 
   // Generic API fixture to reuse cookies or tokens from the browser context.
   apiContext: async ({ page, request }, use) => {
