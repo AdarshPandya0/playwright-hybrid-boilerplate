@@ -1,18 +1,19 @@
-# 🎭 Playwright Hybrid Framework Boilerplate
+# Playwright Hybrid Framework Boilerplate for WebIMS 
 
-Welcome to the **Enterprise Playwright Hybrid Framework**!
+Welcome to the **WebIMS Playwright Hybrid Framework**!
 
 This boilerplate is designed to handle complex automation challenges right out of the box.
 
 ### Key Features
 
+* **Support Parallel Execution** — Current session implementation does not allow same account to be used in multiple browsers thus preventing parallel execution entirely, this boiler plate allows to bypass and perform parallel execution of tests.
 * **Self-Healing Session Injection** — Completely bypasses UI logins using cached authentication tokens when possible to.
 * **Decoupled Garbage Collection** — Prevents file-locking issues during parallel execution and sharding.
 * **Global Base Page Pattern** — Automatically handles unpredictable UI prompts.
 
 ---
 
-# 🛠️ Prerequisites
+# Prerequisites
 
 Before getting started, ensure the following are installed on your machine:
 
@@ -22,7 +23,7 @@ Before getting started, ensure the following are installed on your machine:
 
 ---
 
-# 🚀 Setup Guide
+# Setup Guide
 
 Follow these steps to safely initialize the framework without overwriting any custom configuration.
 
@@ -39,7 +40,7 @@ cd playwright-hybrid-boilerplate
 
 ## Step 2: Install Node Dependencies
 
-> ⚠️ **Important:** Do **NOT** run `npm init playwright`.
+> **Important:** Do **NOT** run `npm init playwright`.
 >
 > This repository is already fully configured.
 
@@ -89,24 +90,23 @@ cp -R .\.env.example .\.env
 Copy-Item -Path ".\.env.example" -Destination ".\.env" -Recurse
 ```
 
-Open the newly created `.env` file and provide:
-
-* `BASE_URL` for your application under test (required if tests use relative URLs)
-* QA environment URLs
+Open the newly created `.env` files and provide:
+* Remove .example extension 
+* Provide the `URL` in this format only : https://webims.meditab.local 
 * User credentials
-* Any additional environment variables required by your application
+* Any additional environment variables that you want to dynamically configure in your test suite
 
 > Note: `playwright.config.js` loads `.env` via `dotenv`, so your test configuration can depend on these values.
 
 ### Parallel Execution Requirement
 
-> ⚠️ To run the fully parallel sharded suite, provide **Multiple separate user accounts as per your need** in the `.env` files.
+> To run the fully parallel sharded suite, provide **Multiple separate user accounts as per your need** in the `.env` files.
 >
 > This prevents test workers from invalidating each other's sessions during execution.
 
 ---
 
-# 🎯 Running Your First Test
+# Running Your First Test
 
 The framework is now fully initialized.
 
@@ -191,7 +191,7 @@ This configuration:
 
 ---
 
-# 🧠 Authentication Flow
+# Authentication Flow
 
 The framework uses an intelligent authentication strategy designed for both speed and reliability.
 
@@ -244,7 +244,7 @@ This recovery process happens automatically without causing test failures.
 
 ---
 
-# 📁 Framework Highlights
+# Framework Highlights
 
 | Feature                         | Description                                             |
 | ------------------------------- | ------------------------------------------------------- |
@@ -257,4 +257,4 @@ This recovery process happens automatically without causing test failures.
 
 ---
 
-Happy Testing! 🎭🚀
+Happy Testing!
